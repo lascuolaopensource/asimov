@@ -10,15 +10,20 @@ const lcd = new LCD('/dev/i2c-1', 0x27);
 const mpr121 = new MPR121(0x5A, 1);
 const serialPort = new SerialPort('/dev/ttyS0', { baudrate: 115200 });
 const rfid = new pn532.PN532(serialPort);
-const servo = new Gpio(4, {mode: Gpio.OUTPUT});
+const servo1 = new Gpio(4, {mode: Gpio.OUTPUT});
+const servo2 = new Gpio(18, {mode: Gpio.OUTPUT});
 
 var loading = false;
 var passInput = false;
 var password = '';
 var uid = '';
+var servoClosedPos = 1000;
+var servoOpenedPos = 2400;
 
 lcd.print("Caricamento...").setCursor(0,0);
-servo.servoWrite(2000);
+closeDoor();
+
+
 mpr121.setThresholds(100, 6);
 
 mpr121.on('touch', (pin) => 
@@ -52,11 +57,11 @@ mpr121.on('touch', (pin) =>
 						console.log(data);
 						lcd.clear();
 						if(data.split(',')[0] === 'AUTHORIZED'){
-							servo.servoWrite(2400);
+							openDoor();
 							lcd.print('Benvenuto!');
-							setTimeout(()=>
+							setTimeout(()=>	
 							{
-								servo.servoWrite(2000);
+								closeDoor();
 							}, 3000);
 						}
 						else{
@@ -81,7 +86,7 @@ mpr121.on('touch', (pin) =>
 
 
 rfid.on('ready', () => 
-{
+{	
 	lcd.print("Avvicinare card").setCursor(0,1);
 	console.log('Listening for a tag scan...');
     rfid.on('tag', (tag) =>
@@ -140,3 +145,14 @@ rfid.on('ready', () =>
 		}
 	});
 });
+
+
+function openDoor(){
+	servo1.servoWrite(2500);
+	servo2.servoWrite(500);
+}
+
+function closeDoor(){
+	servo1.servoWrite(2000);
+	servo2.servoWrite(1000);
+}
