@@ -3,13 +3,14 @@ const LCD = require('./i2c-lcd.js');
 const http = require('http');
 const pn532 = require('pn532');
 const SerialPort = require('serialport');
-
+const PiServo = require('pi-servo');
+const Gpio = require('pigpio').Gpio;
 const lcd = new LCD('/dev/i2c-1', 0x27);
-const mpr121 = new MPR121(0x5A, 1);
 
+const mpr121 = new MPR121(0x5A, 1);
 const serialPort = new SerialPort('/dev/ttyS0', { baudrate: 115200 });
 const rfid = new pn532.PN532(serialPort);
-
+const servo = new Gpio(4, {mode: Gpio.OUTPUT});
 
 var loading = false;
 var passInput = false;
@@ -17,6 +18,7 @@ var password = '';
 var uid = '';
 
 lcd.print("Caricamento...").setCursor(0,0);
+servo.servoWrite(2000);
 mpr121.setThresholds(100, 6);
 
 mpr121.on('touch', (pin) => 
@@ -50,7 +52,12 @@ mpr121.on('touch', (pin) =>
 						console.log(data);
 						lcd.clear();
 						if(data.split(',')[0] === 'AUTHORIZED'){
+							servo.servoWrite(2400);
 							lcd.print('Benvenuto!');
+							setTimeout(()=>
+							{
+								servo.servoWrite(2000);
+							}, 3000);
 						}
 						else{
 							lcd.print('Accesso negato');
